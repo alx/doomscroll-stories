@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doom-scrolling Storyteller</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Terminal.css -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='terminal.css') }}">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h5><i class="fas fa-magic"></i> Story Controls</h5>
+            <button class="btn btn-sm btn-outline-light d-md-none" onclick="toggleSidebar()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+
+        <!-- Story Influences Section -->
+        <div class="influence-section">
+            <h5 class="section-title">
+                <i class="fas fa-chevron-down" id="influences-icon"></i>
+                Story Influences
+            </h5>
+            <div class="section-content" id="influences-content">
+                <h6 class="section-category">Mood</h6>
+                <div class="badge-container" id="mood-badges">
+                    <!-- Mood badges will be populated here -->
+                </div>
+
+                <h6 class="section-category">Genre</h6>
+                <div class="badge-container" id="genre-badges">
+                    <!-- Genre badges will be populated here -->
+                </div>
+
+                <h6 class="section-category">Style</h6>
+                <div class="badge-container" id="intensity-badges">
+                    <!-- Style badges will be populated here -->
+                </div>
+
+                <h6 class="section-category">🌶️ Spicy</h6>
+                <div class="badge-container" id="spicy-badges">
+                    <!-- Spicy badges will be populated here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Character Section -->
+        <div class="influence-section">
+            <h5 class="section-title">
+                <i class="fas fa-chevron-down" id="characters-icon"></i>
+                Character Elements
+            </h5>
+            <div class="section-content" id="characters-content">
+                <h6 class="section-category">Types</h6>
+                <div class="badge-container" id="archetypes-characters">
+                    <!-- Character type badges will be populated here -->
+                </div>
+
+                <h6 class="section-category">Traits</h6>
+                <div class="badge-container" id="traits-characters">
+                    <!-- Character trait badges will be populated here -->
+                </div>
+
+                <h6 class="section-category">Relations</h6>
+                <div class="badge-container" id="relationships-characters">
+                    <!-- Character relationship badges will be populated here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Add New Badge -->
+        <div class="add-badge-section">
+            <h6>Add New Influence</h6>
+            <div class="input-group input-group-sm">
+                <input type="text" class="form-control" id="newBadgeInput" placeholder="e.g. spooky, cheerful">
+                <button class="btn btn-outline-light" type="button" onclick="addNewBadge()">
+                    <i class="fas fa-plus"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Reset Story -->
+        <div class="reset-section">
+            <button class="btn btn-outline-danger btn-sm" onclick="resetStory()">
+                <i class="fas fa-refresh"></i> New Story
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content" id="mainContent">
+        <!-- Mobile sidebar toggle -->
+        <button class="sidebar-toggle btn btn-primary d-md-none" onclick="toggleSidebar()">
+            <i class="fas fa-bars"></i>
+        </button>
+
+        <!-- Header -->
+        <header class="text-center py-4">
+            <h1><i class="fas fa-scroll"></i> Doom-scrolling Storyteller</h1>
+            <p class="text-muted">Toggle influences in the sidebar and scroll to continue your story</p>
+        </header>
+
+        <!-- Story Content -->
+        <div class="story-container" id="storyContainer">
+            <div class="story-segment loading-segment" id="loadingSegment">
+                <div class="text-center">
+                    <div class="start-story-section">
+                        <h3><i class="fas fa-magic"></i> Ready to Begin Your Adventure?</h3>
+                        <p class="mb-4">Select story influences and character elements from the sidebar, then click below to generate your personalized story.</p>
+
+                        <button class="btn btn-primary btn-lg" id="startStoryBtn" onclick="startStory()">
+                            <i class="fas fa-play-circle"></i> Generate Story
+                        </button>
+
+                        <div class="mt-4 text-muted small">
+                            <p><i class="fas fa-lightbulb"></i> <strong>Tip:</strong> Try different combinations of influences for unique stories!</p>
+                        </div>
+                    </div>
+
+                    <!-- Hidden loading state -->
+                    <div class="generating-story-section" id="generatingStory" style="display: none;">
+                        <div class="terminal-loader">
+                            <div class="terminal-cursor"></div>
+                            <div class="loading-dots">
+                                <span>></span>
+                                <span class="dot">.</span>
+                                <span class="dot">.</span>
+                                <span class="dot">.</span>
+                            </div>
+                        </div>
+                        <p class="loading-message" id="loadingMessage">Crafting your story...</p>
+                        <p class="loading-submessage" id="loadingSubmessage">This may take a few moments</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Scroll Trigger Area -->
+        <div class="scroll-trigger" id="scrollTrigger">
+            <div class="text-center py-4">
+                <div class="terminal-loader" style="display: none;" id="continueLoader">
+                    <div class="terminal-cursor"></div>
+                    <div class="loading-dots">
+                        <span>></span>
+                        <span class="dot">.</span>
+                        <span class="dot">.</span>
+                        <span class="dot">.</span>
+                    </div>
+                </div>
+                <p class="scroll-message" id="scrollMessage">Keep scrolling for more story...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Custom JavaScript -->
+    <script>
+        let activeBadges = new Set();
+        let activeCharacters = new Set();
+        let allBadges = {};
+        let allCharacters = {};
+        let currentBadgeCategory = 'mood';
+        let currentCharacterCategory = 'archetypes';
+        let isLoading = false;
+        let hasStarted = false;
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('DOM loaded, initializing...');
+            loadBadges();
+            loadCharacters();
+            setupScrollListener();
+        });
+
+        // Load badges from server
+        async function loadBadges() {
+            console.log('loadBadges called');
+            try {
+                const response = await fetch('/api/get_badges');
+                const data = await response.json();
+                console.log('Server response:', data);
+
+                // Check if server returns categorized object or flat array
+                if (data.badges && typeof data.badges === 'object' && !Array.isArray(data.badges)) {
+                    // Server returned categorized object
+                    allBadges = data.badges;
+                    console.log('Using categorized badges from server:', allBadges);
+                } else {
+                    // Server returned flat array or unexpected format, use fallback structure
+                    console.log('Server returned flat array, using fallback categorized structure');
+                    allBadges = {
+                        mood: ['mysterious', 'romantic', 'funny', 'dark'],
+                        genre: ['sci-fi', 'fantasy', 'horror'],
+                        intensity: ['action-packed', 'slow-burn'],
+                        spicy: ['passionate', 'dangerous']
+                    };
+                }
+                renderCurrentBadges();
+            } catch (error) {
+                console.error('Error loading badges:', error);
+                // Fallback badges
+                allBadges = {
+                    mood: ['mysterious', 'romantic', 'funny', 'dark'],
+                    genre: ['sci-fi', 'fantasy', 'horror'],
+                    intensity: ['action-packed', 'slow-burn'],
+                    spicy: ['passionate', 'dangerous']
+                };
+                console.log('Using fallback badges:', allBadges);
+                renderCurrentBadges();
+            }
+        }
+
+        // Load characters from server
+        async function loadCharacters() {
+            try {
+                const response = await fetch('/api/get_characters');
+                const data = await response.json();
+                allCharacters = data.characters;
+                renderCurrentCharacters();
+            } catch (error) {
+                console.error('Error loading characters:', error);
+                allCharacters = {
+                    archetypes: ['hero', 'villain', 'mentor'],
+                    traits: ['mysterious stranger', 'reluctant hero'],
+                    relationships: ['enemies-to-lovers', 'rivals']
+                };
+                renderCurrentCharacters();
+            }
+        }
+
+        // Render all badge categories
+        function renderCurrentBadges() {
+            console.log('renderCurrentBadges called, allBadges:', allBadges);
+            Object.keys(allBadges).forEach(category => {
+                const containerId = `${category}-badges`;
+                const container = document.getElementById(containerId);
+                console.log(`Looking for container: ${containerId}, found:`, container);
+
+                if (!container) {
+                    console.error(`Container not found: ${containerId}`);
+                    return;
+                }
+
+                container.innerHTML = '';
+                const badges = allBadges[category] || [];
+                console.log(`Rendering badges for ${category}:`, badges);
+
+                badges.forEach(badge => {
+                    const badgeElement = document.createElement('span');
+                    badgeElement.className = `badge story-badge category-${category}`;
+                    if (activeBadges.has(badge)) {
+                        badgeElement.classList.add('active');
+                    }
+                    badgeElement.textContent = badge;
+                    badgeElement.onclick = () => toggleBadge(badge, badgeElement);
+                    container.appendChild(badgeElement);
+                });
+                console.log(`Added ${badges.length} badges to ${containerId}`);
+            });
+        }
+
+        // Render all character categories
+        function renderCurrentCharacters() {
+            Object.keys(allCharacters).forEach(category => {
+                const container = document.getElementById(`${category}-characters`);
+                if (!container) return;
+
+                container.innerHTML = '';
+                const characters = allCharacters[category] || [];
+                characters.forEach(character => {
+                    const characterElement = document.createElement('span');
+                    characterElement.className = `badge character-badge category-${category}`;
+                    if (activeCharacters.has(character)) {
+                        characterElement.classList.add('active');
+                    }
+                    characterElement.textContent = character;
+                    characterElement.onclick = () => toggleCharacter(character, characterElement);
+                    container.appendChild(characterElement);
+                });
+            });
+        }
+
+
+
+        // Toggle badge active state
+        function toggleBadge(badge, element) {
+            if (activeBadges.has(badge)) {
+                activeBadges.delete(badge);
+                element.classList.remove('active');
+            } else {
+                activeBadges.add(badge);
+                element.classList.add('active');
+            }
+        }
+
+        // Toggle character active state
+        function toggleCharacter(character, element) {
+            if (activeCharacters.has(character)) {
+                activeCharacters.delete(character);
+                element.classList.remove('active');
+            } else {
+                activeCharacters.add(character);
+                element.classList.add('active');
+            }
+        }
+
+        // Toggle section expand/collapse
+        function toggleSection(sectionId) {
+            const content = document.getElementById(sectionId + '-content');
+            const icon = document.getElementById(sectionId + '-icon');
+
+            if (content.style.display === 'none') {
+                content.style.display = 'block';
+                icon.className = 'fas fa-chevron-down';
+            } else {
+                content.style.display = 'none';
+                icon.className = 'fas fa-chevron-right';
+            }
+        }
+
+        // Add new badge
+        async function addNewBadge() {
+            const input = document.getElementById('newBadgeInput');
+            const badge = input.value.trim();
+
+            if (!badge) return;
+
+            try {
+                const response = await fetch('/api/add_badge', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({badge: badge})
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    // Reload badges to show new badge in appropriate category
+                    loadBadges();
+                    input.value = '';
+                } else {
+                    alert(data.error || 'Failed to add badge');
+                }
+            } catch (error) {
+                console.error('Error adding badge:', error);
+                alert('Failed to add badge');
+            }
+        }
+
+        // Start initial story
+        async function startStory() {
+            if (isLoading || hasStarted) return;
+
+            isLoading = true;
+            hasStarted = true;
+
+            // Hide start section and show generating section
+            document.querySelector('.start-story-section').style.display = 'none';
+            document.getElementById('generatingStory').style.display = 'block';
+
+            // Update loading message based on selected influences
+            const totalInfluences = activeBadges.size + activeCharacters.size;
+            if (totalInfluences === 0) {
+                updateInitialLoadingMessage('Creating a mysterious tale...', 'No influences selected - letting creativity flow freely');
+            } else if (totalInfluences <= 3) {
+                const influences = [...Array.from(activeBadges), ...Array.from(activeCharacters)];
+                updateInitialLoadingMessage('Crafting your personalized story...', `Incorporating ${totalInfluences} influence${totalInfluences > 1 ? 's' : ''}: ${influences.join(', ')}`);
+            } else {
+                updateInitialLoadingMessage('Weaving a complex narrative...', `Blending ${totalInfluences} influences for maximum storytelling depth`);
+            }
+
+            try {
+                const response = await fetch('/api/start_story', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        active_badges: Array.from(activeBadges),
+                        active_characters: Array.from(activeCharacters)
+                    })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    displayStorySegment(data.segment, data.segment_number);
+                } else {
+                    throw new Error('Failed to start story');
+                }
+            } catch (error) {
+                console.error('Error starting story:', error);
+                displayError('Failed to generate story. Please check your API key and try again.');
+            } finally {
+                isLoading = false;
+            }
+        }
+
+        // Continue story
+        async function continueStory() {
+            console.log('continueStory() called');
+            if (isLoading) {
+                console.log('Already loading, skipping continue story request');
+                return;
+            }
+
+            console.log('Setting loading state and starting continue story request');
+            isLoading = true;
+            showLoadingSpinner(true);
+
+            try {
+                console.log('Sending continue_story request with badges:', Array.from(activeBadges), 'and characters:', Array.from(activeCharacters));
+                const response = await fetch('/api/continue_story', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        active_badges: Array.from(activeBadges),
+                        active_characters: Array.from(activeCharacters)
+                    })
+                });
+
+                const data = await response.json();
+                console.log('Continue story response:', data);
+                if (data.success) {
+                    console.log(`Displaying segment ${data.segment_number}`);
+                    displayStorySegment(data.segment, data.segment_number);
+                } else {
+                    console.error('Continue story failed:', data.error || 'Unknown error');
+                    if (data.error && data.error.includes('No existing story found')) {
+                        // Session was lost, reload page to start fresh
+                        console.log('Session lost, reloading page...');
+                        window.location.reload();
+                        return;
+                    }
+                    throw new Error(data.error || 'Failed to continue story');
+                }
+            } catch (error) {
+                console.error('Error continuing story:', error);
+                displayError('Failed to generate next story segment. Please try again.');
+            } finally {
+                console.log('Continue story request completed, clearing loading state');
+                isLoading = false;
+                showLoadingSpinner(false);
+            }
+        }
+
+        // Convert text with newlines to properly formatted HTML
+        function formatStoryText(text) {
+            return text
+                // Convert markdown headers (### Title) to HTML headers
+                .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+                // Convert double newlines (paragraphs) to paragraph tags
+                .replace(/\n\n+/g, '</p><p>')
+                // Convert single newlines to line breaks
+                .replace(/\n/g, '<br>')
+                // Wrap in paragraph tags if content doesn't start with a header
+                .replace(/^(?!<h3>)/, '<p>')
+                // Close final paragraph if needed
+                .replace(/(?<!<\/h3>)$/, '</p>')
+                // Clean up empty paragraphs
+                .replace(/<p><\/p>/g, '');
+        }
+
+        // Display story segment
+        function displayStorySegment(segment, segmentNumber) {
+            const container = document.getElementById('storyContainer');
+
+            // Hide loading segment on first story
+            if (segmentNumber === 1) {
+                const loadingSegment = document.getElementById('loadingSegment');
+                if (loadingSegment) {
+                    loadingSegment.style.display = 'none';
+                }
+            }
+
+            // Create new segment element
+            const segmentElement = document.createElement('div');
+            segmentElement.className = 'story-segment';
+            // Build influences display
+            const influences = [];
+            if (activeBadges.size > 0) {
+                influences.push(`Story: ${Array.from(activeBadges).join(', ')}`);
+            }
+            if (activeCharacters.size > 0) {
+                influences.push(`Characters: ${Array.from(activeCharacters).join(', ')}`);
+            }
+
+            segmentElement.innerHTML = `
+                <div class="segment-header">
+                    <span class="segment-number">Chapter ${segmentNumber}</span>
+                    ${influences.length > 0 ?
+                        `<span class="active-influences">
+                            Influenced by: ${influences.join(' | ')}
+                        </span>` :
+                        ''
+                    }
+                </div>
+                <div class="segment-content">${formatStoryText(segment)}</div>
+            `;
+
+            container.appendChild(segmentElement);
+
+            // Smooth scroll to new segment
+            segmentElement.scrollIntoView({behavior: 'smooth', block: 'start'});
+        }
+
+        // Display error message
+        function displayError(message) {
+            const container = document.getElementById('storyContainer');
+            const errorElement = document.createElement('div');
+            errorElement.className = 'story-segment error-segment';
+            errorElement.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    ${message}
+                </div>
+            `;
+            container.appendChild(errorElement);
+        }
+
+        // Enhanced loading messages with contextual feedback
+        const loadingMessages = [
+            'Weaving your tale...',
+            'Adding character depth...',
+            'Building suspense...',
+            'Crafting dialogue...',
+            'Setting the scene...',
+            'Developing plot twists...',
+            'Enhancing atmosphere...',
+            'Generating next chapter...'
+        ];
+
+        let currentMessageIndex = 0;
+        let messageInterval;
+
+        // Show/hide loading with contextual messages
+        function showLoadingSpinner(show) {
+            const loader = document.getElementById('continueLoader');
+            const message = document.getElementById('scrollMessage');
+
+            if (show) {
+                loader.style.display = 'block';
+                currentMessageIndex = 0;
+                updateLoadingMessage();
+
+                // Cycle through messages every 2 seconds
+                messageInterval = setInterval(updateLoadingMessage, 2000);
+            } else {
+                loader.style.display = 'none';
+                message.textContent = 'Keep scrolling for more story...';
+                if (messageInterval) {
+                    clearInterval(messageInterval);
+                    messageInterval = null;
+                }
+            }
+        }
+
+        // Update loading message with cycling content
+        function updateLoadingMessage() {
+            const message = document.getElementById('scrollMessage');
+            message.textContent = loadingMessages[currentMessageIndex];
+            currentMessageIndex = (currentMessageIndex + 1) % loadingMessages.length;
+        }
+
+        // Update initial loading message
+        function updateInitialLoadingMessage(text, subtext = '') {
+            const messageEl = document.getElementById('loadingMessage');
+            const submessageEl = document.getElementById('loadingSubmessage');
+
+            if (messageEl) messageEl.textContent = text;
+            if (submessageEl && subtext) submessageEl.textContent = subtext;
+        }
+
+        // Setup scroll listener for infinite scroll
+        function setupScrollListener() {
+            let scrollTimeout;
+            let scrollEventCount = 0;
+
+            console.log('Setting up scroll listener...');
+
+            window.addEventListener('scroll', () => {
+                scrollEventCount++;
+                console.log(`Scroll event #${scrollEventCount} fired`);
+
+                clearTimeout(scrollTimeout);
+                scrollTimeout = setTimeout(() => {
+                    const scrollTrigger = document.getElementById('scrollTrigger');
+                    if (!scrollTrigger) {
+                        console.warn('Scroll trigger element not found');
+                        return;
+                    }
+
+                    const rect = scrollTrigger.getBoundingClientRect();
+                    console.log('Scroll trigger position:', {
+                        top: rect.top,
+                        bottom: rect.bottom,
+                        windowHeight: window.innerHeight,
+                        isVisible: rect.top <= window.innerHeight && rect.bottom >= 0,
+                        isLoading: isLoading,
+                        hasStarted: hasStarted
+                    });
+
+                    // If scroll trigger is visible and we're not loading
+                    if (rect.top <= window.innerHeight && rect.bottom >= 0 && !isLoading && hasStarted) {
+                        console.log('Conditions met - calling continueStory()');
+                        continueStory();
+                    } else {
+                        console.log('Conditions not met for continue story:', {
+                            triggerVisible: rect.top <= window.innerHeight && rect.bottom >= 0,
+                            notLoading: !isLoading,
+                            storyStarted: hasStarted
+                        });
+                    }
+                }, 100);
+            });
+        }
+
+        // Reset story
+        async function resetStory() {
+            if (isLoading) return;
+
+            try {
+                await fetch('/api/reset_story', {method: 'POST'});
+
+                // Clear UI and restore initial state
+                document.getElementById('storyContainer').innerHTML = `
+                    <div class="story-segment loading-segment" id="loadingSegment">
+                        <div class="text-center">
+                            <div class="start-story-section">
+                                <h3><i class="fas fa-magic"></i> Ready to Begin Your Adventure?</h3>
+                                <p class="mb-4">Select story influences and character elements from the sidebar, then click below to generate your personalized story.</p>
+
+                                <button class="btn btn-primary btn-lg" id="startStoryBtn" onclick="startStory()">
+                                    <i class="fas fa-play-circle"></i> Generate Story
+                                </button>
+
+                                <div class="mt-4 text-muted small">
+                                    <p><i class="fas fa-lightbulb"></i> <strong>Tip:</strong> Try different combinations of influences for unique stories!</p>
+                                </div>
+                            </div>
+
+                            <!-- Hidden loading state -->
+                            <div class="generating-story-section" id="generatingStory" style="display: none;">
+                                <div class="terminal-loader">
+                                    <div class="terminal-cursor"></div>
+                                    <div class="loading-dots">
+                                        <span>></span>
+                                        <span class="dot">.</span>
+                                        <span class="dot">.</span>
+                                        <span class="dot">.</span>
+                                    </div>
+                                </div>
+                                <p class="loading-message" id="loadingMessage">Crafting your story...</p>
+                                <p class="loading-submessage" id="loadingSubmessage">This may take a few moments</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                // Reset state
+                hasStarted = false;
+
+            } catch (error) {
+                console.error('Error resetting story:', error);
+                alert('Failed to reset story');
+            }
+        }
+
+        // Toggle sidebar for mobile
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('show');
+        }
+
+        // Allow Enter key to add badge
+        document.getElementById('newBadgeInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                addNewBadge();
+            }
+        });
+    </script>
+
+</body>
+</html>

@@ -1,0 +1,544 @@
+/* Doom-scrolling Storyteller CSS - Terminal Theme */
+
+/* Terminal.css Variables - Default Dark Theme */
+:root {
+    --background: #1a170f;
+    --foreground: #eceae5;
+    --accent: #eec35e;
+    --font-size: 14px;
+    --line-height: 1.5;
+}
+
+/* Global Styles */
+body {
+    font-family: "Fira Code", "JetBrains Mono", Monaco, Consolas, "Ubuntu Mono", monospace;
+    background-color: var(--background);
+    color: var(--foreground);
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
+    font-size: var(--font-size);
+    line-height: var(--line-height);
+}
+
+/* Sidebar Styles */
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: 300px;
+    background: var(--background);
+    border-right: 2px solid var(--accent);
+    padding: 20px;
+    overflow-y: auto;
+    z-index: 1000;
+    color: var(--foreground);
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+}
+
+.sidebar.show {
+    transform: translateX(0);
+}
+
+@media (min-width: 768px) {
+    .sidebar {
+        transform: translateX(0);
+    }
+}
+
+.sidebar-header {
+    border-bottom: 2px solid var(--accent);
+    padding-bottom: 15px;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.sidebar-header h5 {
+    margin: 0;
+    color: var(--accent);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* Badge Container */
+.badge-container {
+    margin-bottom: 25px;
+    max-height: 40vh;
+    overflow-y: auto;
+}
+
+.story-badge {
+    display: inline-block;
+    margin: 3px;
+    padding: 8px 12px;
+    background: transparent;
+    border: 1px solid var(--foreground);
+    color: var(--foreground);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-radius: 0;
+    font-size: 0.875rem;
+    user-select: none;
+    text-transform: uppercase;
+    font-family: inherit;
+}
+
+.story-badge:hover {
+    background: var(--foreground);
+    color: var(--background);
+    transform: none;
+}
+
+.story-badge.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--background);
+    transform: none;
+}
+
+/* Character Badge Styles */
+.character-badge {
+    display: inline-block;
+    margin: 3px;
+    padding: 8px 12px;
+    background: transparent;
+    border: 1px solid var(--foreground);
+    color: var(--foreground);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-radius: 0;
+    font-size: 0.875rem;
+    user-select: none;
+    text-transform: uppercase;
+    font-family: inherit;
+}
+
+.character-badge:hover {
+    background: var(--foreground);
+    color: var(--background);
+    transform: none;
+}
+
+.character-badge.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: var(--background);
+    transform: none;
+}
+
+/* Add Badge Section */
+.add-badge-section {
+    border-top: 1px solid var(--foreground);
+    padding-top: 20px;
+    margin-bottom: 20px;
+}
+
+.add-badge-section h6 {
+    color: var(--accent);
+    margin-bottom: 10px;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.add-badge-section .form-control {
+    background: transparent;
+    border: 1px solid var(--foreground);
+    color: var(--foreground);
+    border-radius: 0;
+    font-family: inherit;
+}
+
+.add-badge-section .form-control::placeholder {
+    color: var(--foreground);
+    opacity: 0.6;
+}
+
+.add-badge-section .form-control:focus {
+    background: transparent;
+    border-color: var(--accent);
+    color: var(--foreground);
+    box-shadow: 0 0 0 0.2rem rgba(238, 195, 94, 0.25);
+}
+
+/* Reset Section */
+.reset-section {
+    border-top: 1px solid var(--foreground);
+    padding-top: 20px;
+}
+
+.btn-outline-danger {
+    color: #ff6b6b;
+    border-color: #ff6b6b;
+    background: transparent;
+}
+
+.btn-outline-danger:hover {
+    background: #ff6b6b;
+    border-color: #ff6b6b;
+    color: var(--background);
+}
+
+.btn-outline-light {
+    color: var(--foreground);
+    border-color: var(--foreground);
+    background: transparent;
+}
+
+.btn-outline-light:hover {
+    background: var(--foreground);
+    border-color: var(--foreground);
+    color: var(--background);
+}
+
+/* Main Content */
+.main-content {
+    margin-left: 0;
+    min-height: 100vh;
+    padding: 0;
+}
+
+@media (min-width: 768px) {
+    .main-content {
+        margin-left: 300px;
+    }
+}
+
+/* Sidebar Toggle Button */
+.sidebar-toggle {
+    position: fixed;
+    top: 20px;
+    left: 20px;
+    z-index: 999;
+    border-radius: 0;
+    padding: 10px 15px;
+    background: var(--accent);
+    color: var(--background);
+    border: none;
+}
+
+.sidebar-toggle:hover {
+    background: var(--foreground);
+    color: var(--background);
+}
+
+/* Header */
+header {
+    background: var(--background);
+    color: var(--foreground);
+    margin: 0;
+    border-bottom: 2px solid var(--accent);
+    padding: 2rem 0 !important;
+}
+
+header h1 {
+    margin: 0;
+    font-weight: 700;
+    color: var(--accent);
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-size: 2.5rem;
+}
+
+header p {
+    color: var(--foreground);
+    opacity: 0.8;
+    margin: 0.5rem 0 0 0;
+}
+
+/* Story Container */
+.story-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.story-segment {
+    background: var(--background);
+    border: 2px solid var(--accent);
+    border-radius: 0;
+    padding: 30px;
+    margin-bottom: 30px;
+    animation: fadeInUp 0.6s ease;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.loading-segment {
+    text-align: center;
+    padding: 60px 30px;
+    color: var(--foreground);
+    opacity: 0.7;
+}
+
+.error-segment {
+    border-left: 4px solid #ff6b6b;
+}
+
+.error-segment .alert-danger {
+    background: transparent;
+    border: 1px solid #ff6b6b;
+    color: #ff6b6b;
+    border-radius: 0;
+}
+
+.segment-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid var(--accent);
+}
+
+.segment-number {
+    font-weight: 600;
+    color: var(--accent);
+    font-size: 1.1rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.active-influences {
+    font-size: 0.8rem;
+    color: var(--foreground);
+    font-style: italic;
+    opacity: 0.7;
+}
+
+.segment-content {
+    font-size: 1.1rem;
+    line-height: 1.8;
+    color: var(--foreground);
+    text-align: left;
+}
+
+.segment-content p {
+    margin-bottom: 1.2rem;
+}
+
+/* Scroll Trigger */
+.scroll-trigger {
+    text-align: center;
+    padding: 40px 20px;
+    background: var(--background);
+    margin: 20px;
+    border: 1px solid var(--foreground);
+    border-radius: 0;
+}
+
+.scroll-trigger p {
+    color: var(--foreground);
+    opacity: 0.7;
+}
+
+/* Responsive Design */
+@media (max-width: 767px) {
+    .story-container {
+        padding: 15px;
+    }
+
+    .story-segment {
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+
+    .segment-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .active-influences {
+        font-size: 0.75rem;
+    }
+
+    .segment-content {
+        font-size: 1rem;
+    }
+
+    header {
+        padding: 30px 20px !important;
+    }
+
+    header h1 {
+        font-size: 1.8rem;
+    }
+}
+
+/* Scrollbar Styling */
+.sidebar::-webkit-scrollbar {
+    width: 6px;
+}
+
+.sidebar::-webkit-scrollbar-track {
+    background: var(--background);
+}
+
+.sidebar::-webkit-scrollbar-thumb {
+    background: var(--accent);
+    border-radius: 0;
+}
+
+.badge-container::-webkit-scrollbar {
+    width: 4px;
+}
+
+.badge-container::-webkit-scrollbar-track {
+    background: var(--background);
+}
+
+.badge-container::-webkit-scrollbar-thumb {
+    background: var(--foreground);
+    border-radius: 0;
+}
+
+/* Loading animations */
+.spinner-border {
+    animation-duration: 0.8s;
+}
+
+/* Hover effects */
+.btn:hover {
+    transform: translateY(-1px);
+    transition: all 0.2s ease;
+}
+
+/* Focus states for accessibility */
+.story-badge:focus,
+.character-badge:focus,
+.btn:focus {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+/* Bootstrap overrides for terminal theme */
+.spinner-border {
+    border-color: var(--accent);
+}
+
+.spinner-border .spinner-border-sm {
+    border-color: var(--accent);
+}
+
+.text-primary {
+    color: var(--accent) !important;
+}
+
+.text-muted {
+    color: var(--foreground) !important;
+    opacity: 0.6;
+}
+
+.text-secondary {
+    color: var(--foreground) !important;
+    opacity: 0.8;
+}
+
+.visually-hidden {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+}
+
+/* Terminal Loading Animation */
+.terminal-loader {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: inherit;
+    font-size: 1.2rem;
+    margin: 20px 0;
+}
+
+.terminal-cursor {
+    width: 2px;
+    height: 20px;
+    background: var(--accent);
+    margin-right: 10px;
+    animation: blink 1s infinite;
+}
+
+.loading-dots {
+    display: flex;
+    align-items: center;
+    color: var(--foreground);
+}
+
+.loading-dots > span {
+    margin-right: 2px;
+}
+
+.loading-dots .dot {
+    opacity: 0.3;
+    animation: dots 2s infinite;
+}
+
+.loading-dots .dot:nth-child(2) {
+    animation-delay: 0.3s;
+}
+
+.loading-dots .dot:nth-child(3) {
+    animation-delay: 0.6s;
+}
+
+.loading-dots .dot:nth-child(4) {
+    animation-delay: 0.9s;
+}
+
+@keyframes blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0; }
+}
+
+@keyframes dots {
+    0%, 20% { opacity: 0.3; }
+    50% { opacity: 1; }
+    80%, 100% { opacity: 0.3; }
+}
+
+/* Loading Messages */
+.loading-message {
+    color: var(--accent);
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 15px 0 5px 0;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.loading-submessage {
+    color: var(--foreground);
+    font-size: 0.9rem;
+    opacity: 0.8;
+    margin: 5px 0 0 0;
+    font-style: italic;
+}
+
+.scroll-message {
+    color: var(--foreground);
+    opacity: 0.7;
+    font-size: 0.9rem;
+    margin: 10px 0 0 0;
+    transition: all 0.3s ease;
+}
