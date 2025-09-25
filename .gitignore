@@ -1,4 +1,9 @@
 CLAUDE.md
 
 logs/*.log
+sessions/
+static/images/
+vendor/
 __pycache__/
+
+.env

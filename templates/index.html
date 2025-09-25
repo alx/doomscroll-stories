@@ -25,6 +25,21 @@
             </button>
         </div>
 
+        <!-- Story Mode Toggle -->
+        <div class="story-mode-section">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="mode-label">Free Mode</span>
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" role="switch" id="storyModeToggle" onchange="toggleStoryMode()">
+                    <label class="form-check-label visually-hidden" for="storyModeToggle">Story Mode Toggle</label>
+                </div>
+                <span class="mode-label guided-label" style="opacity: 0.5;">Guided Mode</span>
+            </div>
+            <small class="text-muted mode-description" id="modeDescription">
+                Infinite scroll continues story automatically
+            </small>
+        </div>
+
         <!-- Story Influences Section -->
         <div class="influence-section">
             <h5 class="section-title">
@@ -145,6 +160,33 @@
             </div>
         </div>
 
+        <!-- Storyline Selection Panel -->
+        <div class="storyline-selection-panel" id="storylinePanel" style="display: none;">
+            <div class="panel-content">
+                <div class="panel-header text-center mb-4">
+                    <h4><i class="fas fa-route"></i> Choose Your Path</h4>
+                    <p class="text-muted">Select which direction the story should take next</p>
+                </div>
+
+                <div class="storyline-options" id="storylineOptions">
+                    <!-- Storyline options will be populated here -->
+                </div>
+
+                <div class="panel-loading text-center" id="storylineLoading" style="display: none;">
+                    <div class="terminal-loader">
+                        <div class="terminal-cursor"></div>
+                        <div class="loading-dots">
+                            <span>></span>
+                            <span class="dot">.</span>
+                            <span class="dot">.</span>
+                            <span class="dot">.</span>
+                        </div>
+                    </div>
+                    <p class="loading-message">Generating storyline options...</p>
+                </div>
+            </div>
+        </div>
+
         <!-- Scroll Trigger Area -->
         <div class="scroll-trigger" id="scrollTrigger">
             <div class="text-center py-4">
@@ -175,14 +217,90 @@
         let currentCharacterCategory = 'archetypes';
         let isLoading = false;
         let hasStarted = false;
+        let storyMode = 'free'; // 'free' or 'guided'
+        let pendingStorylines = [];
+        let awaitingSelection = false;
 
         // Initialize on page load
         document.addEventListener('DOMContentLoaded', function() {
             console.log('DOM loaded, initializing...');
             loadBadges();
             loadCharacters();
+            loadStoryMode();
             setupScrollListener();
         });
+
+        // Load current story mode from server
+        async function loadStoryMode() {
+            try {
+                const response = await fetch('/api/get_story_mode');
+                const data = await response.json();
+                storyMode = data.story_mode || 'free';
+                updateModeToggle();
+            } catch (error) {
+                console.error('Error loading story mode:', error);
+                storyMode = 'free';
+                updateModeToggle();
+            }
+        }
+
+        // Toggle story mode between free and guided
+        async function toggleStoryMode() {
+            const toggle = document.getElementById('storyModeToggle');
+            const newMode = toggle.checked ? 'guided' : 'free';
+
+            try {
+                const response = await fetch('/api/set_story_mode', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        mode: newMode
+                    })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    storyMode = newMode;
+                    updateModeToggle();
+
+                    // Clear any pending storylines when switching modes
+                    awaitingSelection = false;
+                    hideStorylinePanel();
+
+                    console.log(`Story mode changed to: ${storyMode}`);
+                } else {
+                    console.error('Failed to change story mode:', data.error);
+                    // Revert toggle on error
+                    toggle.checked = storyMode === 'guided';
+                }
+            } catch (error) {
+                console.error('Error changing story mode:', error);
+                // Revert toggle on error
+                toggle.checked = storyMode === 'guided';
+            }
+        }
+
+        // Update mode toggle display
+        function updateModeToggle() {
+            const toggle = document.getElementById('storyModeToggle');
+            const modeDescription = document.getElementById('modeDescription');
+            const freeLabel = document.querySelector('.mode-label:not(.guided-label)');
+            const guidedLabel = document.querySelector('.guided-label');
+
+            toggle.checked = storyMode === 'guided';
+
+            if (storyMode === 'guided') {
+                modeDescription.textContent = 'Choose storyline options before continuing';
+                freeLabel.style.opacity = '0.5';
+                guidedLabel.style.opacity = '1';
+            } else {
+                modeDescription.textContent = 'Infinite scroll continues story automatically';
+                freeLabel.style.opacity = '1';
+                guidedLabel.style.opacity = '0.5';
+            }
+        }
 
         // Load badges from server
         async function loadBadges() {
@@ -392,7 +510,7 @@
 
                 const data = await response.json();
                 if (data.success) {
-                    displayStorySegment(data.segment, data.segment_number);
+                    displayStorySegment(data.segment, data.segment_number, null, data.think_sections || [], data.image_url);
                 } else {
                     throw new Error('Failed to start story');
                 }
@@ -407,8 +525,14 @@
         // Continue story
         async function continueStory() {
             console.log('continueStory() called');
-            if (isLoading) {
-                console.log('Already loading, skipping continue story request');
+            if (isLoading || !hasStarted) {
+                console.log('Skipping continueStory - isLoading:', isLoading, 'hasStarted:', hasStarted);
+                return;
+            }
+
+            // In guided mode, show storyline options instead of generating directly
+            if (storyMode === 'guided') {
+                await showStorylineOptions();
                 return;
             }
 
@@ -431,7 +555,7 @@
                 console.log('Continue story response:', data);
                 if (data.success) {
                     console.log(`Displaying segment ${data.segment_number}`);
-                    displayStorySegment(data.segment, data.segment_number);
+                    displayStorySegment(data.segment, data.segment_number, null, data.think_sections || [], data.image_url);
                 } else {
                     console.error('Continue story failed:', data.error || 'Unknown error');
                     if (data.error && data.error.includes('No existing story found')) {
@@ -452,9 +576,147 @@
             }
         }
 
-        // Convert text with newlines to properly formatted HTML
-        function formatStoryText(text) {
-            return text
+        // Show storyline options for guided mode
+        async function showStorylineOptions() {
+            if (awaitingSelection) {
+                console.log('Already awaiting storyline selection');
+                return;
+            }
+
+            awaitingSelection = true;
+            showStorylineLoadingPanel(true);
+
+            try {
+                console.log('Generating storyline options...');
+                const response = await fetch('/api/get_storyline_options', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        active_badges: Array.from(activeBadges),
+                        active_characters: Array.from(activeCharacters)
+                    })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    pendingStorylines = data.storyline_options;
+                    displayStorylineOptions(data.storyline_options);
+                } else {
+                    console.error('Failed to generate storyline options:', data.error);
+                    throw new Error(data.error || 'Failed to generate storyline options');
+                }
+            } catch (error) {
+                console.error('Error generating storyline options:', error);
+                displayError('Failed to generate storyline options. Please try again.');
+                awaitingSelection = false;
+                hideStorylinePanel();
+            } finally {
+                showStorylineLoadingPanel(false);
+            }
+        }
+
+        // Display storyline options for user selection
+        function displayStorylineOptions(options) {
+            const optionsContainer = document.getElementById('storylineOptions');
+            optionsContainer.innerHTML = '';
+
+            options.forEach((option, index) => {
+                const optionElement = document.createElement('div');
+                optionElement.className = 'storyline-option';
+                optionElement.innerHTML = `
+                    <div class="option-header">
+                        <h6 class="option-title">${option.title}</h6>
+                    </div>
+                    <div class="option-description">
+                        ${option.description}
+                    </div>
+                    <button class="btn btn-primary btn-sm mt-2" onclick="selectStoryline(${index})">
+                        <i class="fas fa-arrow-right"></i> Choose This Path
+                    </button>
+                `;
+                optionsContainer.appendChild(optionElement);
+            });
+
+            showStorylinePanel();
+        }
+
+        // Select a storyline option and generate next segment
+        async function selectStoryline(selectedIndex) {
+            if (!pendingStorylines || selectedIndex < 0 || selectedIndex >= pendingStorylines.length) {
+                console.error('Invalid storyline selection:', selectedIndex);
+                return;
+            }
+
+            const selectedOption = pendingStorylines[selectedIndex];
+            console.log('Selected storyline:', selectedOption);
+
+            // Show loading state
+            hideStorylinePanel();
+            isLoading = true;
+            showLoadingSpinner(true);
+
+            try {
+                const response = await fetch('/api/select_storyline', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        selected_index: selectedIndex,
+                        active_badges: Array.from(activeBadges),
+                        active_characters: Array.from(activeCharacters)
+                    })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    console.log(`Displaying storyline-based segment ${data.segment_number}`);
+                    displayStorySegment(data.segment, data.segment_number, data.selected_storyline, data.think_sections || [], data.image_url);
+
+                    // Clear storyline state
+                    pendingStorylines = [];
+                    awaitingSelection = false;
+                } else {
+                    console.error('Failed to select storyline:', data.error);
+                    throw new Error(data.error || 'Failed to select storyline');
+                }
+            } catch (error) {
+                console.error('Error selecting storyline:', error);
+                displayError('Failed to generate story with selected storyline. Please try again.');
+                awaitingSelection = false;
+            } finally {
+                isLoading = false;
+                showLoadingSpinner(false);
+            }
+        }
+
+        // Show/hide storyline selection panel
+        function showStorylinePanel() {
+            const panel = document.getElementById('storylinePanel');
+            panel.style.display = 'block';
+            panel.scrollIntoView({behavior: 'smooth', block: 'center'});
+        }
+
+        function hideStorylinePanel() {
+            const panel = document.getElementById('storylinePanel');
+            panel.style.display = 'none';
+        }
+
+        function showStorylineLoadingPanel(show) {
+            const loadingElement = document.getElementById('storylineLoading');
+            const optionsElement = document.getElementById('storylineOptions');
+
+            if (show) {
+                loadingElement.style.display = 'block';
+                optionsElement.style.display = 'none';
+                showStorylinePanel();
+            } else {
+                loadingElement.style.display = 'none';
+                optionsElement.style.display = 'block';
+            }
+        }
+
+        // Convert text with newlines to properly formatted HTML and handle think placeholders
+        function formatStoryText(text, thinkSections = []) {
+            let processedText = text
                 // Convert markdown headers (### Title) to HTML headers
                 .replace(/^### (.+)$/gm, '<h3>$1</h3>')
                 // Convert double newlines (paragraphs) to paragraph tags
@@ -467,10 +729,51 @@
                 .replace(/(?<!<\/h3>)$/, '</p>')
                 // Clean up empty paragraphs
                 .replace(/<p><\/p>/g, '');
+
+            // Replace think placeholders with accordion HTML
+            if (thinkSections && thinkSections.length > 0) {
+                thinkSections.forEach(thinkSection => {
+                    const placeholder = `__THINK_PLACEHOLDER_${thinkSection.id}__`;
+                    const accordionHtml = createThinkAccordion(thinkSection);
+                    processedText = processedText.replace(placeholder, accordionHtml);
+                });
+            }
+
+            return processedText;
+        }
+
+        // Create accordion HTML for think section
+        function createThinkAccordion(thinkSection) {
+            const accordionId = `accordion_${thinkSection.id}`;
+            const collapseId = `collapse_${thinkSection.id}`;
+
+            // Format think content (preserve line breaks but don't add paragraph tags)
+            const formattedContent = thinkSection.content
+                .replace(/\n/g, '<br>')
+                .trim();
+
+            return `
+                <div class="think-accordion" id="${accordionId}">
+                    <div class="accordion-header" data-bs-toggle="collapse" data-bs-target="#${collapseId}"
+                         aria-expanded="false" aria-controls="${collapseId}">
+                        <div class="accordion-header-content">
+                            <i class="fas fa-brain"></i>
+                            <span class="accordion-title">AI Thinking Process</span>
+                            <i class="fas fa-chevron-down accordion-icon"></i>
+                        </div>
+                    </div>
+                    <div id="${collapseId}" class="accordion-collapse collapse"
+                         aria-labelledby="${accordionId}" data-bs-parent="#${accordionId}">
+                        <div class="accordion-body">
+                            ${formattedContent}
+                        </div>
+                    </div>
+                </div>
+            `;
         }
 
         // Display story segment
-        function displayStorySegment(segment, segmentNumber) {
+        function displayStorySegment(segment, segmentNumber, selectedStoryline = null, thinkSections = [], imageUrl = null) {
             const container = document.getElementById('storyContainer');
 
             // Hide loading segment on first story
@@ -493,6 +796,14 @@
                 influences.push(`Characters: ${Array.from(activeCharacters).join(', ')}`);
             }
 
+            // Add selected storyline info if available
+            let storylineInfo = '';
+            if (selectedStoryline) {
+                storylineInfo = `<div class="selected-storyline-info">
+                    <i class="fas fa-route"></i> <strong>Chosen Path:</strong> ${selectedStoryline.title}
+                </div>`;
+            }
+
             segmentElement.innerHTML = `
                 <div class="segment-header">
                     <span class="segment-number">Chapter ${segmentNumber}</span>
@@ -503,10 +814,44 @@
                         ''
                     }
                 </div>
-                <div class="segment-content">${formatStoryText(segment)}</div>
+                ${imageUrl ?
+                    `<div class="chapter-ornament">
+                        <img src="${imageUrl}" alt="Chapter ${segmentNumber} ornament" loading="lazy" />
+                    </div>` :
+                    ''
+                }
+                ${storylineInfo}
+                <div class="segment-content">${formatStoryText(segment, thinkSections)}</div>
             `;
 
             container.appendChild(segmentElement);
+
+            // Initialize any new accordions (Bootstrap collapse functionality)
+            if (thinkSections && thinkSections.length > 0) {
+                setTimeout(() => {
+                    thinkSections.forEach(thinkSection => {
+                        const collapseId = `collapse_${thinkSection.id}`;
+                        const collapseElement = document.getElementById(collapseId);
+                        if (collapseElement) {
+                            // Initialize Bootstrap Collapse
+                            new bootstrap.Collapse(collapseElement, { toggle: false });
+
+                            // Add click handler for accordion header
+                            const headerElement = collapseElement.previousElementSibling;
+                            if (headerElement && headerElement.classList.contains('accordion-header')) {
+                                headerElement.addEventListener('click', function() {
+                                    const icon = headerElement.querySelector('.accordion-icon');
+                                    if (collapseElement.classList.contains('show')) {
+                                        icon.style.transform = 'rotate(0deg)';
+                                    } else {
+                                        icon.style.transform = 'rotate(180deg)';
+                                    }
+                                });
+                            }
+                        }
+                    });
+                }, 100); // Small delay to ensure DOM is ready
+            }
 
             // Smooth scroll to new segment
             segmentElement.scrollIntoView({behavior: 'smooth', block: 'start'});
@@ -608,15 +953,17 @@
                         hasStarted: hasStarted
                     });
 
-                    // If scroll trigger is visible and we're not loading
-                    if (rect.top <= window.innerHeight && rect.bottom >= 0 && !isLoading && hasStarted) {
+                    // If scroll trigger is visible and we're not loading and not awaiting storyline selection
+                    if (rect.top <= window.innerHeight && rect.bottom >= 0 && !isLoading && hasStarted && !awaitingSelection) {
                         console.log('Conditions met - calling continueStory()');
                         continueStory();
                     } else {
                         console.log('Conditions not met for continue story:', {
                             triggerVisible: rect.top <= window.innerHeight && rect.bottom >= 0,
                             notLoading: !isLoading,
-                            storyStarted: hasStarted
+                            storyStarted: hasStarted,
+                            notAwaitingSelection: !awaitingSelection,
+                            storyMode: storyMode
                         });
                     }
                 }, 100);
